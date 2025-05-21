@@ -1,0 +1,11 @@
+[package]
+name = "rust-projects"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+colored = "2.0.4"
+
+[[bin]]
+name = "todo"
+path = "src/main.rs"
