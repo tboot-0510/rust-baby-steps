@@ -14,7 +14,6 @@ fn main() {
     let todo = Todo::new();
 
     let args: Vec<String> = env::args().collect();
-    println!("{:?}", args);
 
     if args.len() <= 1 {
         println!("run todo");

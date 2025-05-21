@@ -92,21 +92,20 @@ impl Todo {
         let home = env::var("HOME").unwrap();
         println!("home {:?}", home);
 
-        let mut buf_reader =
-            create_file("/Users/tboot/RustroverProjects/rust-todo-list/data/example.txt");
+        // Create a file in the current working directory
+        let current_dir = env::current_dir().unwrap();
+        let current_file_path = format!("{}/data/example.txt", current_dir.display());
 
-        // Empty String ready to be filled with TODOs
+        let mut buf_reader = create_file(&current_file_path);
+
         let mut contents = String::new();
-
-        // Loads "contents" string with data
         buf_reader.read_to_string(&mut contents).unwrap();
 
         let todo = contents.lines().map(str::to_string).collect();
 
         Todo {
             todo,
-            // path: home.to_string(),
-            path: String::from("/Users/tboot/RustroverProjects/rust-todo-list/data/example.txt"),
+            path: current_file_path,
         }
     }
 
@@ -178,7 +177,6 @@ impl Todo {
 
         let line_number: usize = self.verify_number(args);
 
-        // Open file
         let mut buffer = open_file_and_truncate(&self.path);
 
         let edit_todo: Vec<String> = self
@@ -246,7 +244,36 @@ impl Todo {
         let _ = buffer.write_all(sorted_lines.join("").as_bytes());
     }
 
-    pub fn raw(self) {}
+    pub fn raw(self, args: &[String]) {
+        if args.is_empty() || args.len() > 1 {
+            print!("args not valid");
+            process::exit(1);
+        }
+
+        let listed_by_value: Vec<String> = match args[0].as_str() {
+            "done" => self
+                .todo
+                .iter()
+                .filter(|line| Entry::read_line(line).checked)
+                .map(|line| line.to_string())
+                .collect(),
+            "todo" => self
+                .todo
+                .iter()
+                .filter(|line| !Entry::read_line(line).checked)
+                .map(|line| line.to_string())
+                .collect(),
+            _ => {
+                println!("raw value must be either 'done' or 'todo'");
+                process::exit(1);
+            }
+        };
+
+        let stdout = std::io::stdout();
+        let mut buffer = BufWriter::new(stdout.lock());
+
+        let _ = buffer.write_all(listed_by_value.join("\n").as_bytes());
+    }
 
     fn verify_number(&self, args: &[String]) -> usize {
         let line_number: usize = args[0].parse().unwrap_or_else(|_| {
